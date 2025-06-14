@@ -59,6 +59,9 @@
     <div id="inspiration-counter" class="fixed top-4 right-4 bg-black bg-opacity-50 p-3 rounded-lg border-2 border-white">
         Inspirações: <span id="counter-value">2</span>
     </div>
+    <div id="faith-counter" class="fixed top-4 left-4 bg-black bg-opacity-50 p-3 rounded-lg border-2 border-yellow-300">
+        Fé: <span id="faith-value">0</span>
+    </div>
 
     <h1 class="text-3xl mb-4 text-yellow-300">Jornada Bíblica 2D - O Enigma</h1>
     <p class="mb-4 text-center px-4">
@@ -123,12 +126,14 @@
         const inspirationSource = document.getElementById('inspirationSource');
         const closeInspirationBtn = document.getElementById('closeInspirationBtn');
         const counterValueEl = document.getElementById('counter-value');
+        const faithValueEl = document.getElementById('faith-value');
         
         // --- Estado do Jogo ---
         const TILE_SIZE = 40;
         let animationFrame = 0;
         let currentMap = 'elder_house';
         let inspirationCount = 2;
+        let faith = 0;
 
         startOverlay.addEventListener('click', () => {
             backgroundMusic.volume = 0.2;
@@ -154,8 +159,9 @@
         const player = {
             x: TILE_SIZE * 5, y: TILE_SIZE * 5,
             width: TILE_SIZE, height: TILE_SIZE * 1.2, speed: 5,
+            z: 0, vZ: 0, isJumping: false,
             draw() {
-                const bobY = Math.sin(animationFrame * 0.1) * 2;
+                const bobY = Math.sin(animationFrame * 0.1) * 2 - this.z;
                 ctx.fillStyle = '#d69e2e';
                 ctx.fillRect(this.x + 5, this.y + 20 + bobY, this.width - 10, this.height - 20);
                 ctx.fillStyle = '#f6e05e';
@@ -209,7 +215,12 @@
                     { name: 'Profeta Isaías', x: TILE_SIZE * 48, y: TILE_SIZE * 13, color: '#b794f4', hairColor: '#C0C0C0', dialogue: 'Quando falei pela primeira vez, parecia que uma presença me envolvia. Foi como respirar outra realidade.' },
                     { type: 'campfire', name: 'Fogueira', x: TILE_SIZE * 18, y: TILE_SIZE * 13, dialogue: '*O fogo dança e consome...*', inspirationType: 'fire' },
                     { type: 'tree', name: 'Árvore', x: TILE_SIZE * 35, y: TILE_SIZE * 17, dialogue: '*Um sopro de vida percorre a criação.*', inspirationType: 'wind' },
-                    { type: 'deck', name: 'Deck', x: TILE_SIZE * 20, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE * 2, dialogue: '*Um bom lugar para observar a água...*', inspirationType: 'water' },
+                    { type: 'deck', name: 'Deck', x: TILE_SIZE * 20, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE * 2, dialogue: '*Um bom lugar para observar a água...*', inspirationType: 'water' }
+                ],
+                collectibles: [
+                    { type: 'cross', x: TILE_SIZE * 14, y: TILE_SIZE * 6 },
+                    { type: 'cross', x: TILE_SIZE * 26, y: TILE_SIZE * 14 },
+                    { type: 'cross', x: TILE_SIZE * 42, y: TILE_SIZE * 10 }
                 ],
                 scenery: [
                     { type: 'house_ext', x: TILE_SIZE * 10, y: TILE_SIZE * 6 },
@@ -217,7 +228,8 @@
                     { type: 'bridge', x: TILE_SIZE * 21, y: TILE_SIZE * 11, width: TILE_SIZE * 4, height: TILE_SIZE * 2 },
                     { type: 'flowering_tree', x: TILE_SIZE * 2, y: TILE_SIZE * 3},
                     { type: 'tree', x: TILE_SIZE * 10, y: TILE_SIZE * 18 },
-                    { type: 'hill', x: TILE_SIZE * 44, y: TILE_SIZE * 3, width: TILE_SIZE * 4, height: TILE_SIZE * 4}
+                    { type: 'hill', x: TILE_SIZE * 44, y: TILE_SIZE * 3, width: TILE_SIZE * 4, height: TILE_SIZE * 4},
+                    { type: 'hole', x: TILE_SIZE * 30, y: TILE_SIZE * 7, width: TILE_SIZE, height: TILE_SIZE }
                 ],
                 collisionAreas: [
                     { x: TILE_SIZE * 21, y: 0, width: TILE_SIZE * 4, height: TILE_SIZE * 11 },
@@ -230,6 +242,10 @@
             (map.interactables || []).forEach(item => {
                 item.width = item.width || TILE_SIZE;
                 item.height = item.type ? TILE_SIZE : TILE_SIZE * 1.2;
+            });
+            (map.collectibles || []).forEach(item => {
+                item.width = item.width || TILE_SIZE;
+                item.height = item.height || TILE_SIZE;
             });
              (map.scenery || []).forEach(item => {
                 item.width = item.width || TILE_SIZE;
@@ -314,6 +330,24 @@
                  ctx.beginPath();
                  ctx.ellipse(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/2, obj.height/2, 0, 0, Math.PI * 2);
                  ctx.fill();
+            } else if (obj.type === 'hole') {
+                 ctx.fillStyle = '#000000';
+                 ctx.beginPath();
+                 ctx.arc(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/2, 0, Math.PI * 2);
+                 ctx.fill();
+                 ctx.strokeStyle = '#444444';
+                 ctx.lineWidth = 2;
+                 ctx.stroke();
+            }
+        }
+
+        function drawCollectible(obj) {
+            if (obj.type === 'cross') {
+                ctx.fillStyle = '#ffd700';
+                const cx = obj.x + obj.width / 2;
+                const cy = obj.y + obj.height / 2;
+                ctx.fillRect(cx - obj.width * 0.1, obj.y, obj.width * 0.2, obj.height);
+                ctx.fillRect(obj.x, cy - obj.height * 0.1, obj.width, obj.height * 0.2);
             }
         }
 
@@ -339,6 +373,9 @@
                     drawSceneryObject(obj);
                 }
             });
+
+            // Desenha objetos coletáveis
+            (map.collectibles || []).forEach(obj => drawCollectible(obj));
 
             // Desenha todos os outros objetos e personagens, ordenados por Y
             const allObjects = [...(map.scenery || []).filter(o => o.type !== 'bridge' && o.type !== 'deck' && o.type !== 'hill'), ...(map.interactables || []), player]
@@ -476,6 +513,13 @@
             }
         }
 
+        function startJump() {
+            if (!player.isJumping && player.z === 0) {
+                player.isJumping = true;
+                player.vZ = 8;
+            }
+        }
+
         const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
         window.addEventListener('keydown', (e) => {
             const key = e.key.toLowerCase();
@@ -484,6 +528,7 @@
                 return;
             }
             if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+            if (e.code === 'Space') startJump();
             if (key === 'e' || key === 'r') handleInteraction(key);
         });
         window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
@@ -511,7 +556,17 @@
 
             player.x = Math.max(0, Math.min(player.x, map.width - player.width));
             player.y = Math.max(0, Math.min(player.y, map.height - player.height));
-            
+
+            if (player.isJumping || player.z > 0) {
+                player.z += player.vZ;
+                player.vZ -= 0.5;
+                if (player.z <= 0) {
+                    player.z = 0;
+                    player.vZ = 0;
+                    player.isJumping = false;
+                }
+            }
+
             if(currentMap === 'world'){
                 const campfire = maps.world.interactables.find(it => it.type === 'campfire');
                 fireParticles.forEach(p => {
@@ -524,6 +579,23 @@
                 riverParticles.forEach(p => {
                     p.y += p.speedY;
                     if(p.y > maps.world.height) p.y = 0;
+                });
+
+                if (maps.world.collectibles) {
+                    for (let i = maps.world.collectibles.length - 1; i >= 0; i--) {
+                        const item = maps.world.collectibles[i];
+                        if (isColliding(player, item)) {
+                            maps.world.collectibles.splice(i, 1);
+                            faith++;
+                            faithValueEl.textContent = faith;
+                        }
+                    }
+                }
+
+                maps.world.scenery.forEach(obj => {
+                    if (obj.type === 'hole' && isColliding(player, obj)) {
+                        gameOverOverlay.style.display = 'flex';
+                    }
                 });
             }
             
