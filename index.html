@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jornada Bíblica 2D - O Enigma</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #1a202c;
+            color: #e2e8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        canvas {
+            background-color: #2c5282;
+            border-radius: 0.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            image-rendering: pixelated;
+        }
+        .modal, .overlay { display: none; transition: opacity 0.3s ease; }
+        .modal-content, .inspiration-content { animation: slide-up 0.4s ease-out; }
+        @keyframes slide-up { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        input[type="text"], button { font-family: 'Press Start 2P', cursive; }
+        .pixel-button { position: relative; display: inline-block; padding: 12px 24px; color: white; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; border: 2px solid #000; box-shadow: inset -2px -2px 0px 0px #fff5, inset 2px 2px 0px 0px #0005; transition: all 0.1s ease-in-out; }
+        .pixel-button:hover { transform: translateY(-2px); box-shadow: inset -3px -3px 0px 0px #fff5, inset 3px 3px 0px 0px #0005, 0px 4px 0 #000; }
+        .pixel-button:active { transform: translateY(2px); box-shadow: inset -1px -1px 0px 0px #fff5, inset 1px 1px 0px 0px #0005; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+
+    <!-- Overlays -->
+    <div id="start-music-overlay" class="overlay fixed inset-0 bg-black bg-opacity-90 flex justify-center items-center z-50 cursor-pointer" style="display: flex;">
+        <div class="text-center">
+            <h2 class="text-4xl text-yellow-300 mb-4 animate-pulse">Jornada Bíblica 2D</h2>
+            <p class="text-2xl">Clique para iniciar</p>
+        </div>
+    </div>
+    <div id="victory-overlay" class="overlay fixed inset-0 bg-black bg-opacity-90 flex justify-center items-center z-50" style="display: none;">
+        <div class="text-center">
+            <h2 class="text-4xl text-green-400 mb-4">Enigma Resolvido!</h2>
+            <p class="text-xl">Você alcançou a sabedoria. A paz esteja contigo.</p>
+        </div>
+    </div>
+     <div id="game-over-overlay" class="overlay fixed inset-0 bg-black bg-opacity-90 flex flex-col justify-center items-center z-50" style="display: none;">
+        <div class="text-center">
+            <h2 class="text-6xl text-red-600 mb-8" style="text-shadow: 2px 2px #000;">GAME OVER</h2>
+            <button id="restartBtn" class="pixel-button bg-gray-600">Recomeçar</button>
+        </div>
+    </div>
+
+    <div id="inspiration-counter" class="fixed top-4 right-4 bg-black bg-opacity-50 p-3 rounded-lg border-2 border-white">
+        Inspirações: <span id="counter-value">2</span>
+    </div>
+
+    <h1 class="text-3xl mb-4 text-yellow-300">Jornada Bíblica 2D - O Enigma</h1>
+    <p class="mb-4 text-center px-4">
+        Use as <kbd class="bg-gray-700 p-1 rounded">Setas</kbd> para mover. Pressione <kbd class="bg-gray-700 p-1 rounded">E</kbd> para conversar e <kbd class="bg-gray-700 p-1 rounded">R</kbd> para inspiração.
+    </p>
+
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <!-- Modal de Interação -->
+    <div id="interactionModal" class="modal fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center p-4 z-40">
+        <div class="modal-content bg-gray-800 p-8 rounded-lg shadow-2xl border-4 border-double border-gray-500 max-w-lg w-full text-center">
+            <p id="npcName" class="text-2xl text-yellow-400 mb-4"></p>
+            <p id="npcDialogue" class="text-lg mb-6 leading-relaxed"></p>
+            <div id="questionContainer" class="hidden">
+                <input type="text" id="answerInput" class="bg-gray-700 border-2 border-gray-500 rounded-md p-2 text-white w-full mb-4 focus:outline-none focus:border-yellow-400" placeholder="Digite a palavra...">
+                <button id="submitAnswerBtn" class="pixel-button bg-green-600">Revelar</button>
+            </div>
+            <p id="feedbackText" class="mt-4 h-6 text-xl"></p>
+             <button id="closeModalBtn" class="mt-4 pixel-button bg-red-600">Fechar</button>
+        </div>
+    </div>
+    
+    <!-- Modal de Inspiração -->
+    <div id="inspirationModal" class="modal fixed inset-0 bg-black bg-opacity-75 flex justify-center items-center p-4 z-40">
+        <div class="inspiration-content bg-gray-900 p-8 rounded-lg shadow-2xl border-4 border-yellow-500 max-w-2xl w-full">
+            <h2 id="inspirationTitle" class="text-3xl text-center mb-4"></h2>
+            <p id="inspirationDescription" class="text-center text-lg text-gray-300 mb-6"></p>
+            <blockquote id="inspirationVerse" class="text-center text-yellow-200 border-l-4 border-yellow-400 pl-4 py-2 italic"></blockquote>
+            <p id="inspirationSource" class="text-right text-gray-400 mt-2"></p>
+            <div class="text-center mt-8">
+                <button id="closeInspirationBtn" class="pixel-button bg-blue-600">Entendido</button>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="background-music" loop>
+        <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/01_-_Monplaisir_-_Music_for_an_islet.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Elementos da UI e Música ---
+        const startOverlay = document.getElementById('start-music-overlay');
+        const victoryOverlay = document.getElementById('victory-overlay');
+        const gameOverOverlay = document.getElementById('game-over-overlay');
+        const restartBtn = document.getElementById('restartBtn');
+        const backgroundMusic = document.getElementById('background-music');
+        const modal = document.getElementById('interactionModal');
+        const npcNameEl = document.getElementById('npcName');
+        const npcDialogueEl = document.getElementById('npcDialogue');
+        const questionContainer = document.getElementById('questionContainer');
+        const answerInput = document.getElementById('answerInput');
+        const submitAnswerBtn = document.getElementById('submitAnswerBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const feedbackText = document.getElementById('feedbackText');
+        const inspirationModal = document.getElementById('inspirationModal');
+        const inspirationTitle = document.getElementById('inspirationTitle');
+        const inspirationDescription = document.getElementById('inspirationDescription');
+        const inspirationVerse = document.getElementById('inspirationVerse');
+        const inspirationSource = document.getElementById('inspirationSource');
+        const closeInspirationBtn = document.getElementById('closeInspirationBtn');
+        const counterValueEl = document.getElementById('counter-value');
+        
+        // --- Estado do Jogo ---
+        const TILE_SIZE = 40;
+        let animationFrame = 0;
+        let currentMap = 'elder_house';
+        let inspirationCount = 2;
+
+        startOverlay.addEventListener('click', () => {
+            backgroundMusic.volume = 0.2;
+            backgroundMusic.play().catch(e => console.log("Música bloqueada pelo navegador."));
+            startOverlay.style.display = 'none';
+            const elder = maps[currentMap].interactables.find(item => item.isQuestGiver);
+            if (elder) openModal(elder);
+        }, { once: true });
+        
+        restartBtn.addEventListener('click', () => window.location.reload());
+
+        const camera = {
+            x: 0, y: 0, width: canvas.width, height: canvas.height,
+            update() {
+                const mapData = maps[currentMap];
+                this.x = player.x - this.width / 2;
+                this.y = player.y - this.height / 2;
+                this.x = Math.max(0, Math.min(this.x, mapData.width - this.width));
+                this.y = Math.max(0, Math.min(this.y, mapData.height - this.height));
+            }
+        };
+
+        const player = {
+            x: TILE_SIZE * 5, y: TILE_SIZE * 5,
+            width: TILE_SIZE, height: TILE_SIZE * 1.2, speed: 5,
+            draw() {
+                const bobY = Math.sin(animationFrame * 0.1) * 2;
+                ctx.fillStyle = '#d69e2e';
+                ctx.fillRect(this.x + 5, this.y + 20 + bobY, this.width - 10, this.height - 20);
+                ctx.fillStyle = '#f6e05e';
+                ctx.fillRect(this.x, this.y + 5 + bobY, this.width, this.height - 25);
+                ctx.fillStyle = 'black';
+                ctx.fillRect(this.x + 8, this.y + 12 + bobY, 5, 5);
+                ctx.fillRect(this.x + 27, this.y + 12 + bobY, 5, 5);
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.x, this.y + bobY, this.width, 10);
+            }
+        };
+        
+        let fireParticles = [];
+        let riverParticles = [];
+
+        const inspirationData = {
+            fire: {
+                symbol: '🔥', title: 'FOGO', description: 'Símbolo de purificação e presença divina',
+                verse: 'Porque o Senhor teu Deus é um fogo que consome, um Deus zeloso.', source: 'Deuteronômio 4:24'
+            },
+            water: {
+                symbol: '💧', title: 'ÁGUA', description: 'Símbolo de renovação interior',
+                verse: 'Derramarei água sobre o sedento, e torrentes sobre a terra seca...', source: 'Isaías 44:3'
+            },
+            wind: {
+                symbol: '🌬️', title: 'VENTO', description: 'Símbolo de movimento invisível e poder divino',
+                verse: 'O vento sopra onde quer, ouves o seu som, mas não sabes de onde vem nem para onde vai...', source: 'João 3:8a'
+            }
+        };
+
+        const maps = {
+            'elder_house': {
+                 width: TILE_SIZE * 12, height: TILE_SIZE * 10,
+                 interactables: [
+                     { name: 'Ancião', x: TILE_SIZE * 7, y: TILE_SIZE * 4, color: '#f6ad55', hairColor: '#FFFFFF', isQuestGiver: true, hasGivenQuest: false, dialogue: 'A paz, viajante. Para sair, encontre a porta. Lá fora, busque a sabedoria que não se vê. Converse com meus irmãos, e quando entender o que nos move e nos conecta ao divino, volte e diga-me a palavra.', question: 'Você encontrou a sabedoria? Qual é a palavra?', answer: 'espírito', successDialogue: 'Exato! É o Espírito que dá vida e nos guia. Você tem um coração sábio.' },
+                 ],
+                 scenery: [
+                    {type: 'door', x: TILE_SIZE * 5, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE / 2, targetMap: 'world', targetX: TILE_SIZE * 10.5, targetY: TILE_SIZE * 8},
+                    {type: 'table', x: TILE_SIZE * 2, y: TILE_SIZE * 3},
+                 ],
+                 collisionAreas:[]
+            },
+            'world': {
+                width: TILE_SIZE * 50, height: TILE_SIZE * 25,
+                interactables: [
+                    { name: 'Maria', x: TILE_SIZE * 2, y: TILE_SIZE * 4, color: '#ed64a6', hairColor: '#362312', dialogue: 'Nem sempre compreendemos o chamado… mas há momentos em que uma força interior nos guia em silêncio absoluto.' },
+                    { name: 'João Batista', x: TILE_SIZE * 20, y: TILE_SIZE * 8, color: '#A0522D', hairColor: '#4A5568', dialogue: 'Minha missão é preparar. Outro virá, e Ele batizará não com água, mas com fogo e com o Santo...' },
+                    { name: 'Pedro', x: TILE_SIZE * 17, y: TILE_SIZE * 12.5, color: '#82572b', hairColor: '#606060', dialogue: 'Naquele dia, algo acendeu dentro de mim. Uma chama que nunca se apagou. Foi como nascer de novo.' },
+                    { name: 'Paulo', x: TILE_SIZE * 35, y: TILE_SIZE * 18, color: '#4a5568', hairColor: '#4a3728', dialogue: 'Desejo que sua caminhada seja marcada por aquilo que é eterno, e não apenas pelo que os olhos podem ver.' },
+                    { name: 'Anjo Gabriel', x: TILE_SIZE * 45, y: TILE_SIZE * 4, color: '#FFFFFF', hairColor: '#FFD700', dialogue: 'Não trago palavras minhas. Sou um mensageiro, um sopro da vontade do Altíssimo.' },
+                    { name: 'Profeta Isaías', x: TILE_SIZE * 48, y: TILE_SIZE * 13, color: '#b794f4', hairColor: '#C0C0C0', dialogue: 'Quando falei pela primeira vez, parecia que uma presença me envolvia. Foi como respirar outra realidade.' },
+                    { type: 'campfire', name: 'Fogueira', x: TILE_SIZE * 18, y: TILE_SIZE * 13, dialogue: '*O fogo dança e consome...*', inspirationType: 'fire' },
+                    { type: 'tree', name: 'Árvore', x: TILE_SIZE * 35, y: TILE_SIZE * 17, dialogue: '*Um sopro de vida percorre a criação.*', inspirationType: 'wind' },
+                    { type: 'deck', name: 'Deck', x: TILE_SIZE * 20, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE * 2, dialogue: '*Um bom lugar para observar a água...*', inspirationType: 'water' },
+                ],
+                scenery: [
+                    { type: 'house_ext', x: TILE_SIZE * 10, y: TILE_SIZE * 6 },
+                    { type: 'door', x: TILE_SIZE * 10.5, y: TILE_SIZE * 8, width: TILE_SIZE, height: TILE_SIZE/2, targetMap: 'elder_house', targetX: TILE_SIZE * 5, targetY: TILE_SIZE * 8 },
+                    { type: 'bridge', x: TILE_SIZE * 21, y: TILE_SIZE * 11, width: TILE_SIZE * 4, height: TILE_SIZE * 2 },
+                    { type: 'flowering_tree', x: TILE_SIZE * 2, y: TILE_SIZE * 3},
+                    { type: 'tree', x: TILE_SIZE * 10, y: TILE_SIZE * 18 },
+                    { type: 'hill', x: TILE_SIZE * 44, y: TILE_SIZE * 3, width: TILE_SIZE * 4, height: TILE_SIZE * 4}
+                ],
+                collisionAreas: [
+                    { x: TILE_SIZE * 21, y: 0, width: TILE_SIZE * 4, height: TILE_SIZE * 11 },
+                    { x: TILE_SIZE * 21, y: TILE_SIZE * 13, width: TILE_SIZE * 4, height: TILE_SIZE * 12 }
+                ]
+            }
+        };
+
+        Object.values(maps).forEach(map => {
+            (map.interactables || []).forEach(item => {
+                item.width = item.width || TILE_SIZE;
+                item.height = item.type ? TILE_SIZE : TILE_SIZE * 1.2;
+            });
+             (map.scenery || []).forEach(item => {
+                item.width = item.width || TILE_SIZE;
+                item.height = item.height || TILE_SIZE;
+            });
+        });
+
+        function initParticles() {
+            const campfire = maps.world.interactables.find(it => it.type === 'campfire');
+            if(campfire) {
+                for(let i=0; i<20; i++) {
+                    fireParticles.push({
+                        x: campfire.x + TILE_SIZE / 2, y: campfire.y + TILE_SIZE / 2, size: Math.random() * 5 + 2,
+                        speedY: Math.random() * -1 - 0.5, speedX: (Math.random() - 0.5) * 0.5, life: Math.random() * 60
+                    });
+                }
+            }
+             for(let i=0; i<50; i++) {
+                riverParticles.push({
+                    x: TILE_SIZE * 21 + Math.random() * (TILE_SIZE * 4), y: Math.random() * maps.world.height,
+                    size: Math.random() * 2 + 1, speedY: Math.random() * 0.5 + 0.2,
+                });
+            }
+        }
+
+        function drawCharacter(char) {
+            const bobY = Math.sin((animationFrame + char.x) * 0.1) * 2;
+            ctx.fillStyle = char.color;
+            ctx.fillRect(char.x + 5, char.y + 20 + bobY, char.width - 10, char.height - 20);
+            ctx.fillStyle = '#ecc94b';
+            ctx.fillRect(char.x, char.y + 5 + bobY, char.width, char.height - 25);
+            ctx.fillStyle = 'black';
+            ctx.fillRect(char.x + 8, char.y + 12 + bobY, 5, 5);
+            ctx.fillRect(char.x + 27, char.y + 12 + bobY, 5, 5);
+            ctx.fillStyle = char.hairColor || '#000000';
+            ctx.fillRect(char.x, char.y + bobY, char.width, 10);
+        }
+        
+        function drawSceneryObject(obj) {
+            if (obj.type === 'tree' || obj.type === 'flowering_tree') {
+                const treeBaseY = obj.y + TILE_SIZE;
+                ctx.fillStyle = '#875a2f';
+                ctx.fillRect(obj.x, treeBaseY, TILE_SIZE, TILE_SIZE);
+                const swayX = Math.sin(animationFrame * 0.05 + obj.x) * 4;
+                ctx.fillStyle = obj.type === 'flowering_tree' ? '#ffc0cb' : '#2f855a';
+                ctx.beginPath();
+                ctx.arc(obj.x + TILE_SIZE / 2 + swayX, treeBaseY - TILE_SIZE * 0.4, TILE_SIZE, 0, Math.PI * 2);
+                ctx.fill();
+            } else if (obj.type === 'campfire') {
+                ctx.fillStyle = '#5c4033';
+                ctx.fillRect(obj.x, obj.y + TILE_SIZE * 0.6, TILE_SIZE, TILE_SIZE * 0.4);
+                const fireHeight = Math.sin(animationFrame * 0.2) * 10 + 20;
+                ctx.fillStyle = `rgba(255, ${100 + Math.random()*50}, 0, 0.8)`;
+                ctx.beginPath();
+                ctx.moveTo(obj.x + TILE_SIZE / 2, obj.y + TILE_SIZE * 0.8);
+                ctx.lineTo(obj.x, obj.y + TILE_SIZE - fireHeight);
+                ctx.lineTo(obj.x + TILE_SIZE, obj.y + TILE_SIZE - fireHeight);
+                ctx.closePath();
+                ctx.fill();
+            } else if (obj.type === 'bridge' || obj.type === 'door' || obj.type === 'deck') {
+                ctx.fillStyle = '#8b4513';
+                ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                ctx.fillStyle = '#654321';
+                for(let i = 0; i < obj.width; i+=10) {
+                     ctx.fillRect(obj.x + i, obj.y, 5, obj.height);
+                }
+            } else if (obj.type === 'house_ext') {
+                 ctx.fillStyle = '#a52a2a';
+                ctx.fillRect(obj.x, obj.y, TILE_SIZE * 2, TILE_SIZE * 2);
+                ctx.fillStyle = '#654321';
+                ctx.beginPath();
+                ctx.moveTo(obj.x - 10, obj.y);
+                ctx.lineTo(obj.x + TILE_SIZE, obj.y - TILE_SIZE);
+                ctx.lineTo(obj.x + TILE_SIZE * 2 + 10, obj.y);
+                ctx.closePath();
+                ctx.fill();
+            } else if (obj.type === 'table') {
+                 ctx.fillStyle = '#8b4513';
+                ctx.fillRect(obj.x, obj.y, TILE_SIZE * 2, TILE_SIZE);
+            } else if (obj.type === 'hill') {
+                 ctx.fillStyle = '#689f38';
+                 ctx.beginPath();
+                 ctx.ellipse(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/2, obj.height/2, 0, 0, Math.PI * 2);
+                 ctx.fill();
+            }
+        }
+
+        function drawMap() {
+            const map = maps[currentMap];
+            if (currentMap === 'world') {
+                ctx.fillStyle = '#48bb78'; ctx.fillRect(0, 0, map.width, map.height);
+                ctx.fillStyle = '#a0aec0'; ctx.fillRect(0, TILE_SIZE * 10, map.width, TILE_SIZE * 6);
+                ctx.fillStyle = '#4299e1'; ctx.fillRect(TILE_SIZE * 21, 0, TILE_SIZE * 4, map.height);
+            } else { // elder_house
+                 ctx.fillStyle = '#a0522d';
+                ctx.fillRect(0, 0, map.width, map.height);
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(0, 0, map.width, TILE_SIZE/2);
+                ctx.fillRect(0, 0, TILE_SIZE/2, map.height);
+                ctx.fillRect(map.width - TILE_SIZE/2, 0, TILE_SIZE/2, map.height);
+                ctx.fillRect(0, map.height - TILE_SIZE/2, map.width, TILE_SIZE/2);
+            }
+            
+            // Desenha primeiro o cenário que fica no chão
+            (map.scenery || []).forEach(obj => {
+                if (obj.type === 'bridge' || obj.type === 'deck' || obj.type === 'hill') {
+                    drawSceneryObject(obj);
+                }
+            });
+
+            // Desenha todos os outros objetos e personagens, ordenados por Y
+            const allObjects = [...(map.scenery || []).filter(o => o.type !== 'bridge' && o.type !== 'deck' && o.type !== 'hill'), ...(map.interactables || []), player]
+                .sort((a, b) => (a.y + (a.height || TILE_SIZE)) - (b.y + (b.height || TILE_SIZE)));
+            
+            allObjects.forEach(obj => {
+                if (obj.type && obj.type !== 'door') drawSceneryObject(obj);
+                else if (obj === player) player.draw();
+                else if (!obj.type) drawCharacter(obj);
+            });
+            
+            if (currentMap === 'world') {
+                riverParticles.forEach(p => {
+                    ctx.fillStyle = `rgba(255, 255, 255, 0.5)`;
+                    ctx.fillRect(p.x, p.y, p.size, p.size * 2);
+                });
+                fireParticles.forEach(p => {
+                    ctx.fillStyle = `rgba(255, 165, 0, ${p.life / 60})`;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                });
+            }
+
+            const allInteractables = [...(map.interactables || []), ...(map.scenery || []).filter(s => s.type === 'door')];
+            allInteractables.forEach(item => {
+                if (getDistance(player, item) < TILE_SIZE * 1.5) {
+                    ctx.fillStyle = 'white'; ctx.font = "16px 'Press Start 2P'"; ctx.textAlign = 'center'; ctx.strokeStyle = 'black'; ctx.lineWidth = 4;
+                    const textY = item.y - 10;
+                    ctx.strokeText("[E]", item.x + item.width / 2, textY);
+                    ctx.fillText("[E]", item.x + item.width / 2, textY);
+                    if (item.inspirationType) {
+                        ctx.strokeText("[R]", item.x + item.width / 2, textY + 20);
+                        ctx.fillText("[R]", item.x + item.width / 2, textY + 20);
+                    }
+                }
+             });
+        }
+        
+        let activeNpc = null;
+        function getDistance(obj1, obj2) {
+            const dx = (obj1.x + obj1.width / 2) - (obj2.x + obj2.width / 2);
+            const dy = (obj1.y + obj1.height / 2) - (obj2.y + obj2.height / 2);
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function isColliding(rect1, rect2) {
+            return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
+        }
+
+        function handleInteraction(key) {
+             if (modal.style.display === 'flex' || inspirationModal.style.display === 'flex') return;
+            const map = maps[currentMap];
+            const allInteractables = [...(map.interactables || []), ...(map.scenery || []).filter(s => s.type === 'door')];
+             
+            for (const item of allInteractables) {
+                if (getDistance(player, item) < TILE_SIZE * 1.5) {
+                    if (key === 'e') {
+                         if(item.type === 'door') {
+                             currentMap = item.targetMap;
+                             player.x = item.targetX;
+                             player.y = item.targetY;
+                             return;
+                         }
+                         openModal(item);
+                    } else if (key === 'r' && item.inspirationType) {
+                        if (inspirationCount > 0) {
+                            openInspirationModal(item.inspirationType);
+                            inspirationCount--;
+                            counterValueEl.textContent = inspirationCount;
+                        } else {
+                           openModal({name: 'Reflexão', dialogue: 'Você já usou toda a sua inspiração por agora...'})
+                        }
+                    }
+                    return;
+                }
+            }
+        }
+        
+        function openModal(item) {
+            activeNpc = item;
+            modal.style.display = 'flex';
+            npcNameEl.textContent = item.name;
+            feedbackText.textContent = '';
+            answerInput.value = '';
+            
+            if (item.isQuestGiver) {
+                 if (item.questCompleted) {
+                     npcDialogueEl.textContent = item.successDialogue;
+                     questionContainer.style.display = 'none';
+                     closeModalBtn.style.display = 'inline-block';
+                 } else if (!item.hasGivenQuest) {
+                    npcDialogueEl.textContent = item.dialogue;
+                    questionContainer.style.display = 'none';
+                    closeModalBtn.style.display = 'inline-block';
+                    item.hasGivenQuest = true;
+                } else {
+                    npcDialogueEl.textContent = item.question;
+                    questionContainer.style.display = 'block';
+                    closeModalBtn.style.display = 'none';
+                    setTimeout(() => answerInput.focus(), 100);
+                }
+            } else {
+                npcDialogueEl.textContent = item.dialogue;
+                questionContainer.style.display = 'none';
+                closeModalBtn.style.display = 'inline-block';
+            }
+        }
+
+        function openInspirationModal(type) {
+            const data = inspirationData[type];
+            inspirationTitle.innerHTML = `${data.symbol} ${data.title}`;
+            inspirationDescription.textContent = data.description;
+            inspirationVerse.textContent = `"${data.verse}"`;
+            inspirationSource.textContent = `— ${data.source}`;
+            inspirationModal.style.display = 'flex';
+        }
+        
+        function closeModal() { modal.style.display = 'none'; activeNpc = null; }
+        function closeInspiration() { inspirationModal.style.display = 'none'; }
+
+        function checkAnswer() {
+            if (!activeNpc) return;
+            const userAnswer = answerInput.value.trim().toLowerCase();
+            if (activeNpc.isQuestGiver && userAnswer === activeNpc.answer) {
+                feedbackText.textContent = "Correto!";
+                feedbackText.style.color = '#68d391';
+                activeNpc.dialogue = activeNpc.successDialogue;
+                activeNpc.question = null;
+                setTimeout(() => {
+                    closeModal();
+                    victoryOverlay.style.display = 'flex';
+                }, 1500);
+            } else {
+                closeModal();
+                gameOverOverlay.style.display = 'flex';
+            }
+        }
+
+        const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
+        window.addEventListener('keydown', (e) => {
+            const key = e.key.toLowerCase();
+            if (modal.style.display === 'flex' || inspirationModal.style.display === 'flex') {
+                 if (key === 'enter' && modal.style.display === 'flex' && questionContainer.style.display === 'block') checkAnswer();
+                return;
+            }
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+            if (key === 'e' || key === 'r') handleInteraction(key);
+        });
+        window.addEventListener('keyup', (e) => { if (keys.hasOwnProperty(e.key)) keys[e.key] = false; });
+        closeModalBtn.addEventListener('click', closeModal);
+        closeInspirationBtn.addEventListener('click', closeInspiration);
+        submitAnswerBtn.addEventListener('click', checkAnswer);
+        
+        function update() {
+            let nextX = player.x; let nextY = player.y;
+            if (keys.ArrowUp) nextY -= player.speed;
+            if (keys.ArrowDown) nextY += player.speed;
+            if (keys.ArrowLeft) nextX -= player.speed;
+            if (keys.ArrowRight) nextX += player.speed;
+
+            let isBlocked = false;
+            const nextPlayerRect = { x: nextX, y: nextY, width: player.width, height: player.height };
+            const map = maps[currentMap];
+
+            if (map.collisionAreas) {
+                for (const area of map.collisionAreas) {
+                    if (isColliding(nextPlayerRect, area)) { isBlocked = true; break; }
+                }
+            }
+            if (!isBlocked) { player.x = nextX; player.y = nextY; }
+
+            player.x = Math.max(0, Math.min(player.x, map.width - player.width));
+            player.y = Math.max(0, Math.min(player.y, map.height - player.height));
+            
+            if(currentMap === 'world'){
+                const campfire = maps.world.interactables.find(it => it.type === 'campfire');
+                fireParticles.forEach(p => {
+                    p.y += p.speedY; p.x += p.speedX; p.life -= 1;
+                    if(p.life <= 0 && campfire) {
+                        p.x = campfire.x + TILE_SIZE / 2; p.y = campfire.y + TILE_SIZE / 2;
+                        p.life = Math.random() * 60; p.speedY = Math.random() * -1 - 0.5;
+                    }
+                });
+                riverParticles.forEach(p => {
+                    p.y += p.speedY;
+                    if(p.y > maps.world.height) p.y = 0;
+                });
+            }
+            
+            camera.update();
+            animationFrame++;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+            drawMap();
+            ctx.restore();
+        }
+        
+        initParticles();
+        function gameLoop() {
+            if (modal.style.display !== 'flex' && victoryOverlay.style.display !== 'flex' && inspirationModal.style.display !== 'flex' && gameOverOverlay.style.display !== 'flex') {
+                 update();
+            }
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop();
+    </script>
+
+</body>
+</html>
