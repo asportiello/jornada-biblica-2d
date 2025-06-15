@@ -100,6 +100,12 @@
     <audio id="background-music" loop>
         <source src="https://files.freemusicarchive.org/storage-freemusicarchive-org/music/no_curator/Monplaisir/01_-_Monplaisir_-_Music_for_an_islet.mp3" type="audio/mpeg">
     </audio>
+    <audio id="jump-sound">
+        <source src="https://raw.githubusercontent.com/jazziNardis/Amogus-Jumpscare/master/files/falling-metal-pipe.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="interact-sound">
+        <source src="https://raw.githubusercontent.com/jazziNardis/Amogus-Jumpscare/master/files/amogus.mp3" type="audio/mpeg">
+    </audio>
 
     <script>
         const canvas = document.getElementById('gameCanvas');
@@ -111,6 +117,8 @@
         const gameOverOverlay = document.getElementById('game-over-overlay');
         const restartBtn = document.getElementById('restartBtn');
         const backgroundMusic = document.getElementById('background-music');
+        const jumpSound = document.getElementById('jump-sound');
+        const interactSound = document.getElementById('interact-sound');
         const modal = document.getElementById('interactionModal');
         const npcNameEl = document.getElementById('npcName');
         const npcDialogueEl = document.getElementById('npcDialogue');
@@ -160,7 +168,14 @@
             x: TILE_SIZE * 5, y: TILE_SIZE * 5,
             width: TILE_SIZE, height: TILE_SIZE * 1.2, speed: 5,
             z: 0, vZ: 0, isJumping: false,
+            direction: 'right',
             draw() {
+                ctx.save();
+                if (this.direction === 'left') {
+                    ctx.translate(this.x + this.width / 2, 0);
+                    ctx.scale(-1, 1);
+                    ctx.translate(-(this.x + this.width / 2), 0);
+                }
                 const bobY = Math.sin(animationFrame * 0.1) * 2 - this.z;
                 ctx.fillStyle = '#d69e2e';
                 ctx.fillRect(this.x + 5, this.y + 20 + bobY, this.width - 10, this.height - 20);
@@ -171,6 +186,7 @@
                 ctx.fillRect(this.x + 27, this.y + 12 + bobY, 5, 5);
                 ctx.fillStyle = '#654321';
                 ctx.fillRect(this.x, this.y + bobY, this.width, 10);
+                ctx.restore();
             }
         };
         
@@ -456,6 +472,8 @@
         function openModal(item) {
             activeNpc = item;
             modal.style.display = 'flex';
+            interactSound.currentTime = 0;
+            interactSound.play();
             npcNameEl.textContent = item.name;
             feedbackText.textContent = '';
             answerInput.value = '';
@@ -517,6 +535,8 @@
             if (!player.isJumping && player.z === 0) {
                 player.isJumping = true;
                 player.vZ = 8;
+                jumpSound.currentTime = 0;
+                jumpSound.play();
             }
         }
 
@@ -542,6 +562,8 @@
             if (keys.ArrowDown) nextY += player.speed;
             if (keys.ArrowLeft) nextX -= player.speed;
             if (keys.ArrowRight) nextX += player.speed;
+            if (keys.ArrowLeft && !keys.ArrowRight) player.direction = 'left';
+            else if (keys.ArrowRight && !keys.ArrowLeft) player.direction = 'right';
 
             let isBlocked = false;
             const nextPlayerRect = { x: nextX, y: nextY, width: player.width, height: player.height };
