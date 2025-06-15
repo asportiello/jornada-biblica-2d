@@ -230,7 +230,7 @@
                     { name: 'Paulo', x: TILE_SIZE * 35, y: TILE_SIZE * 18, color: '#4a5568', hairColor: '#4a3728', dialogue: 'Desejo que sua caminhada seja marcada por aquilo que é eterno, e não apenas pelo que os olhos podem ver.' },
                     { name: 'Anjo Gabriel', x: TILE_SIZE * 45, y: TILE_SIZE * 4, color: '#FFFFFF', hairColor: '#FFD700', dialogue: 'Não trago palavras minhas. Sou um mensageiro, um sopro da vontade do Altíssimo.' },
                     { name: 'Profeta Isaías', x: TILE_SIZE * 48, y: TILE_SIZE * 13, color: '#b794f4', hairColor: '#C0C0C0', dialogue: 'Quando falei pela primeira vez, parecia que uma presença me envolvia. Foi como respirar outra realidade.' },
-                    { name: 'Mateus', x: TILE_SIZE * 40, y: TILE_SIZE * 20, color: '#d69e2e', hairColor: '#704214', isFetchQuest: true, hasGivenQuest: false, questCompleted: false, dialogue: 'Por favor, você pode me ajudar? Perdi um pergaminho valioso por aqui.', reminderDialogue: 'Se encontrar o pergaminho perdido, volte e fale comigo.', successDialogue: 'Muito obrigado por recuperar o pergaminho!' },
+                    { name: 'Mateus', x: TILE_SIZE * 40, y: TILE_SIZE * 20, color: '#d69e2e', hairColor: '#704214', isFetchQuest: true, hasGivenQuest: false, questCompleted: false, inspirationGiven: false, dialogue: 'Por favor, você pode me ajudar? Perdi um pergaminho valioso por aqui.', reminderDialogue: 'Se encontrar o pergaminho perdido, volte e fale comigo.', successDialogue: 'Muito obrigado por recuperar o pergaminho!' },
                     { type: 'campfire', name: 'Fogueira', x: TILE_SIZE * 18, y: TILE_SIZE * 13, dialogue: '*O fogo dança e consome...*', inspirationType: 'fire' },
                     { type: 'tree', name: 'Árvore', x: TILE_SIZE * 35, y: TILE_SIZE * 17, dialogue: '*Um sopro de vida percorre a criação.*', inspirationType: 'wind' },
                     { type: 'deck', name: 'Deck', x: TILE_SIZE * 20, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE * 2, dialogue: '*Um bom lugar para observar a água...*', inspirationType: 'water' }
@@ -477,12 +477,39 @@
             return rect1.x < rect2.x + rect2.width && rect1.x + rect1.width > rect2.x && rect1.y < rect2.y + rect2.height && rect1.y + rect1.height > rect2.y;
         }
 
+        function moveNpc(npc) {
+            if (!npc.moveTo) return;
+            const speed = 2;
+            const dx = npc.moveTo.x - npc.x;
+            const dy = npc.moveTo.y - npc.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist <= speed) {
+                npc.x = npc.moveTo.x;
+                npc.y = npc.moveTo.y;
+                if (npc.moveTo.targetMap) {
+                    const idx = maps.world.interactables.indexOf(npc);
+                    if (idx !== -1) maps.world.interactables.splice(idx, 1);
+                    npc.x = npc.moveTo.targetX;
+                    npc.y = npc.moveTo.targetY;
+                    maps[npc.moveTo.targetMap].interactables.push(npc);
+                    npc.atOliveMount = true;
+                }
+                delete npc.isMoving;
+                delete npc.moveTo;
+                return;
+            }
+            npc.x += Math.sign(dx) * Math.min(speed, Math.abs(dx));
+            npc.y += Math.sign(dy) * Math.min(speed, Math.abs(dy));
+            npc.direction = dx < 0 ? 'left' : 'right';
+        }
+
         function handleInteraction(key) {
              if (modal.style.display === 'flex' || inspirationModal.style.display === 'flex') return;
             const map = maps[currentMap];
             const allInteractables = [...(map.interactables || []), ...(map.scenery || []).filter(s => s.type === 'door')];
              
             for (const item of allInteractables) {
+                if (item.isMoving) continue;
                 if (getDistance(player, item) < TILE_SIZE * 1.5) {
                     if (key === 'e') {
                          if(item.type === 'door') {
@@ -533,11 +560,23 @@
                 }
             } else if (item.isFetchQuest) {
                 if (item.questCompleted) {
-                    npcDialogueEl.textContent = item.successDialogue;
+                    if (item.atOliveMount && !item.inspirationGiven) {
+                        npcDialogueEl.textContent = 'Que a paz esteja contigo! Receba esta inspiração pela ajuda.';
+                        inspirationCount++;
+                        counterValueEl.textContent = inspirationCount;
+                        item.inspirationGiven = true;
+                    } else {
+                        npcDialogueEl.textContent = item.successDialogue;
+                    }
                 } else if (playerHasScroll) {
                     npcDialogueEl.textContent = item.successDialogue;
                     item.questCompleted = true;
                     playerHasScroll = false;
+                    const door = maps.world.scenery.find(s => s.targetMap === 'monte_das_oliveiras');
+                    if (door) {
+                        item.moveTo = { x: door.x, y: door.y, targetMap: 'monte_das_oliveiras', targetX: TILE_SIZE * 6, targetY: TILE_SIZE * 7 };
+                        item.moveAfterClose = true;
+                    }
                 } else if (!item.hasGivenQuest) {
                     npcDialogueEl.textContent = item.dialogue;
                     item.hasGivenQuest = true;
@@ -562,7 +601,14 @@
             inspirationModal.style.display = 'flex';
         }
         
-        function closeModal() { modal.style.display = 'none'; activeNpc = null; }
+        function closeModal() {
+            modal.style.display = 'none';
+            if (activeNpc && activeNpc.moveAfterClose) {
+                activeNpc.isMoving = true;
+                delete activeNpc.moveAfterClose;
+            }
+            activeNpc = null;
+        }
         function closeInspiration() { inspirationModal.style.display = 'none'; }
 
         function checkAnswer() {
@@ -649,6 +695,10 @@
                         p.x = campfire.x + TILE_SIZE / 2; p.y = campfire.y + TILE_SIZE / 2;
                         p.life = Math.random() * 60; p.speedY = Math.random() * -1 - 0.5;
                     }
+                });
+
+                maps.world.interactables.forEach(npc => {
+                    if (npc.isMoving) moveNpc(npc);
                 });
                 riverParticles.forEach(p => {
                     p.y += p.speedY;
