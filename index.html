@@ -63,6 +63,9 @@
     <div id="faith-counter" class="fixed top-4 left-4 bg-black bg-opacity-50 p-3 rounded-lg border-2 border-yellow-300">
         Fé: <span id="faith-value">0</span>
     </div>
+    <div id="grape-counter" class="fixed top-20 left-4 bg-black bg-opacity-50 p-3 rounded-lg border-2 border-purple-300">
+        Uvas: <span id="grape-value">0</span>
+    </div>
 
     <h1 class="text-3xl mb-4 text-yellow-300">Jornada Bíblica 2D - O Enigma</h1>
     <p class="mb-4 text-center px-4">
@@ -144,6 +147,7 @@
         const playAgainBtn = document.getElementById('playAgainBtn');
         const counterValueEl = document.getElementById('counter-value');
         const faithValueEl = document.getElementById('faith-value');
+        const grapeValueEl = document.getElementById('grape-value');
         
         // --- Estado do Jogo ---
         const TILE_SIZE = 40;
@@ -151,6 +155,7 @@
         let currentMap = 'elder_house';
         let inspirationCount = 2;
         let faith = 0;
+        let grapes = 0;
         let playerHasScroll = false;
 
         startOverlay.addEventListener('click', () => {
@@ -293,11 +298,22 @@
             'vinhedo': {
                 width: TILE_SIZE * 60, height: TILE_SIZE * 20,
                 interactables: [
-                    { name: 'Mestre da Vinha', x: TILE_SIZE * 30, y: TILE_SIZE * 12, color: '#8b4513', hairColor: '#654321', dialogue: 'Seja bem-vindo, viajante. O trabalho aqui é árduo, mas a recompensa é justa.' },
-                    { name: 'Trabalhador Fundador', x: TILE_SIZE * 36, y: TILE_SIZE * 14, color: '#a0522d', hairColor: '#444444', dialogue: 'Eu vi este lugar nascer.' },
-                    { name: 'Mulher Sábia', x: TILE_SIZE * 24, y: TILE_SIZE * 14, color: '#ed64a6', hairColor: '#ffffff', dialogue: 'O sol se põe, e é hora de refletir.' }
+                    { name: 'Mestre da Vinha', x: TILE_SIZE * 30, y: TILE_SIZE * 12, color: '#8b4513', hairColor: '#654321', firstEnigmaSolved: false, isEnigmaMaster: true, dialogue: 'O que é esta construção, que não \u00e9 feita de tijolos, mas de pessoas, um s\u00f3 corpo com muitos membros?' },
+                    { name: 'Trabalhador Fundador', x: TILE_SIZE * 36, y: TILE_SIZE * 14, color: '#a0522d', hairColor: '#444444', dialogue: 'O Mestre construiu nossa uni\u00e3o sobre uma pedra s\u00f3lida, para que nada possa abal\u00e1-la.' },
+                    { name: 'Mulher S\u00e1bia', x: TILE_SIZE * 24, y: TILE_SIZE * 14, color: '#ed64a6', hairColor: '#ffffff', dialogue: 'Podemos ter todos os dons, mas sem o maior de todos, o v\u00ednculo da perfei\u00e7\u00e3o, nada ser\u00edamos.' }
                 ],
-                collectibles: [],
+                    collectibles: [
+                        { type: 'grape', x: TILE_SIZE * 11, y: TILE_SIZE * 7 },
+                        { type: 'grape', x: TILE_SIZE * 14, y: TILE_SIZE * 7 },
+                        { type: 'grape', x: TILE_SIZE * 17, y: TILE_SIZE * 7 },
+                        { type: 'grape', x: TILE_SIZE * 20, y: TILE_SIZE * 7 },
+                        { type: 'grape', x: TILE_SIZE * 23, y: TILE_SIZE * 7 },
+                        { type: 'grape', x: TILE_SIZE * 11, y: TILE_SIZE * 10 },
+                        { type: 'grape', x: TILE_SIZE * 14, y: TILE_SIZE * 10 },
+                        { type: 'grape', x: TILE_SIZE * 17, y: TILE_SIZE * 10 },
+                        { type: 'grape', x: TILE_SIZE * 20, y: TILE_SIZE * 10 },
+                        { type: 'grape', x: TILE_SIZE * 23, y: TILE_SIZE * 10 }
+                    ],
                 scenery: [
                     { type: 'lagar', x: TILE_SIZE * 28, y: TILE_SIZE * 10, width: TILE_SIZE * 4, height: TILE_SIZE * 2 },
                     { type: 'videira', x: TILE_SIZE * 10, y: TILE_SIZE * 6 },
@@ -451,6 +467,11 @@
             } else if (obj.type === 'scroll') {
                 ctx.fillStyle = '#deb887';
                 ctx.fillRect(obj.x + obj.width * 0.2, obj.y + obj.height * 0.2, obj.width * 0.6, obj.height * 0.6);
+            } else if (obj.type === 'grape') {
+                ctx.fillStyle = '#9f7aea';
+                ctx.beginPath();
+                ctx.arc(obj.x + obj.width / 2, obj.y + obj.height / 2, obj.width / 3, 0, Math.PI * 2);
+                ctx.fill();
             }
         }
 
@@ -605,7 +626,15 @@
             feedbackText.textContent = '';
             answerInput.value = '';
             
-            if (item.isQuestGiver) {
+            if (item.isEnigmaMaster) {
+                npcDialogueEl.textContent = item.firstEnigmaSolved ?
+                    'Voc\u00ea entendeu a forma. Mas qual \u00e9 a argamassa que nos une? O maior de todos os dons?' :
+                    item.dialogue;
+                questionContainer.style.display = 'block';
+                yesNoContainer.style.display = 'none';
+                closeModalBtn.style.display = 'none';
+                setTimeout(() => answerInput.focus(), 100);
+            } else if (item.isQuestGiver) {
                  if (item.questCompleted) {
                      npcDialogueEl.textContent = item.successDialogue;
                      questionContainer.style.display = 'none';
@@ -688,7 +717,32 @@
         function checkAnswer() {
             if (!activeNpc) return;
             const userAnswer = answerInput.value.trim().toLowerCase();
-            if (activeNpc.isQuestGiver && userAnswer === activeNpc.answer) {
+            if (activeNpc.isEnigmaMaster) {
+                if (!activeNpc.firstEnigmaSolved) {
+                    if (userAnswer === 'igreja') {
+                        activeNpc.firstEnigmaSolved = true;
+                        feedbackText.textContent = 'Correto!';
+                        feedbackText.style.color = '#68d391';
+                        answerInput.value = '';
+                        npcDialogueEl.textContent = 'Voc\u00ea entendeu a forma. Mas qual \u00e9 a argamassa que nos une? O maior de todos os dons?';
+                        setTimeout(() => answerInput.focus(), 100);
+                        return;
+                    } else {
+                        closeModal();
+                        gameOverOverlay.style.display = 'flex';
+                        return;
+                    }
+                } else {
+                    if (userAnswer === 'caridade' || userAnswer === 'amor') {
+                        closeModal();
+                        victoryOverlay.style.display = 'flex';
+                    } else {
+                        closeModal();
+                        gameOverOverlay.style.display = 'flex';
+                    }
+                    return;
+                }
+            } else if (activeNpc.isQuestGiver && userAnswer === activeNpc.answer) {
                 feedbackText.textContent = "Correto!";
                 feedbackText.style.color = '#68d391';
                 activeNpc.dialogue = activeNpc.successDialogue;
@@ -804,6 +858,19 @@
                         gameOverOverlay.style.display = 'flex';
                     }
                 });
+            } else if(currentMap === 'vinhedo') {
+                if (maps.vinhedo.collectibles) {
+                    for (let i = maps.vinhedo.collectibles.length - 1; i >= 0; i--) {
+                        const item = maps.vinhedo.collectibles[i];
+                        if (isColliding(player, item)) {
+                            maps.vinhedo.collectibles.splice(i, 1);
+                            if (item.type === 'grape') {
+                                grapes++;
+                                grapeValueEl.textContent = grapes;
+                            }
+                        }
+                    }
+                }
             }
             
             camera.update();
