@@ -240,6 +240,31 @@
             wind: {
                 symbol: '🌬️', title: 'VENTO', description: 'Símbolo de movimento invisível e poder divino',
                 verse: 'O vento sopra onde quer, ouves o seu som, mas não sabes de onde vem nem para onde vai...', source: 'João 3:8a'
+            },
+            ancient_vine: {
+                symbol: '🍇', title: 'VIDEIRA ANTIGA',
+                description: 'Eu sou o tronco, vocês são os ramos. Separados de mim, nada podem fazer. A seiva que corre aqui é a mesma que alimenta o menor dos brotos, e nos torna um só.',
+                verse: '', source: ''
+            },
+            scarecrow: {
+                symbol: '🌾', title: 'ESPANTALHO',
+                description: 'Posto aqui para proteger, não para julgar. Minha função é servir e guardar o fruto do trabalho alheio, sem esperar recompensa ou reconhecimento.',
+                verse: '', source: ''
+            },
+            sharing_table: {
+                symbol: '🍞', title: 'MESA DE PARTILHA',
+                description: 'Aqui, o pão tem mais sabor, pois é dividido. O pouco de muitos se torna a abundância de todos. É a comunhão que verdadeiramente alimenta a alma.',
+                verse: '', source: ''
+            },
+            rejected_stones: {
+                symbol: '🪨', title: 'PEDRAS REJEITADAS',
+                description: 'Fomos postas de lado, consideradas inúteis para a construção. Mas dizem que a pedra que os construtores rejeitaram pode se tornar a mais importante de todas, a pedra angular.',
+                verse: '', source: ''
+            },
+            broken_tool: {
+                symbol: '⚒️', title: 'FERRAMENTA QUEBRADA',
+                description: 'Sozinha, sou inútil. Minha força não vem do meu metal, mas das mãos que me empunham e do propósito que me dão. Uma ferramenta só tem valor na obra.',
+                verse: '', source: ''
             }
         };
 
@@ -312,7 +337,12 @@
                     { name: 'Balde vazio', type: 'bucket', x: TILE_SIZE * 27, y: TILE_SIZE * 14, dialogue: 'Um balde vazio.' },
                     { name: 'Po\u00e7o', type: 'well', x: TILE_SIZE * 27, y: TILE_SIZE * 15 },
                     { name: 'Trabalhador Sedento 1', x: TILE_SIZE * 26, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
-                    { name: 'Trabalhador Sedento 2', x: TILE_SIZE * 29, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true }
+                    { name: 'Trabalhador Sedento 2', x: TILE_SIZE * 29, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
+                    { name: 'Videira Antiga', type: 'ancient_vine', x: TILE_SIZE * 18, y: TILE_SIZE * 9, inspirationType: 'ancient_vine' },
+                    { name: 'Espantalho', type: 'scarecrow', x: TILE_SIZE * 55, y: TILE_SIZE * 15, inspirationType: 'scarecrow' },
+                    { name: 'Mesa de Partilha', type: 'sharing_table', x: TILE_SIZE * 32, y: TILE_SIZE * 16, width: TILE_SIZE * 2, inspirationType: 'sharing_table' },
+                    { name: 'Pedras Rejeitadas', type: 'rejected_stones', x: TILE_SIZE * 33, y: TILE_SIZE * 12, inspirationType: 'rejected_stones' },
+                    { name: 'Ferramenta Quebrada', type: 'broken_tool', x: TILE_SIZE * 28, y: TILE_SIZE * 17, inspirationType: 'broken_tool' }
                 ],
                     collectibles: [
                         { type: 'grape', x: TILE_SIZE * 11, y: TILE_SIZE * 7 },
@@ -475,6 +505,30 @@
             } else if (obj.type === 'videira') {
                  ctx.fillStyle = '#225a1a';
                  ctx.fillRect(obj.x, obj.y, TILE_SIZE * 1.5, TILE_SIZE * 0.8);
+            } else if (obj.type === 'ancient_vine') {
+                 ctx.fillStyle = '#4a2c17';
+                 ctx.fillRect(obj.x + TILE_SIZE * 0.6, obj.y + TILE_SIZE * 0.6, TILE_SIZE * 0.3, TILE_SIZE * 0.9);
+                 ctx.fillStyle = '#225a1a';
+                 ctx.fillRect(obj.x, obj.y, TILE_SIZE * 1.5, TILE_SIZE * 0.8);
+            } else if (obj.type === 'scarecrow') {
+                 ctx.fillStyle = '#a0522d';
+                 ctx.fillRect(obj.x + obj.width / 2 - 2, obj.y, 4, obj.height);
+                 ctx.fillRect(obj.x, obj.y + obj.height * 0.3, obj.width, 4);
+            } else if (obj.type === 'sharing_table') {
+                 ctx.fillStyle = '#8b4513';
+                 ctx.fillRect(obj.x, obj.y, obj.width, TILE_SIZE * 0.6);
+            } else if (obj.type === 'rejected_stones') {
+                 ctx.fillStyle = '#a0aec0';
+                 for(let i=0;i<3;i++) {
+                     ctx.beginPath();
+                     ctx.arc(obj.x + 8 + i*12, obj.y + TILE_SIZE*0.6, 6, 0, Math.PI * 2);
+                     ctx.fill();
+                 }
+            } else if (obj.type === 'broken_tool') {
+                 ctx.fillStyle = '#a0aec0';
+                 ctx.fillRect(obj.x + obj.width*0.2, obj.y + obj.height*0.4, obj.width*0.6, 4);
+                 ctx.fillStyle = '#654321';
+                 ctx.fillRect(obj.x + obj.width*0.45, obj.y + obj.height*0.2, 4, obj.height*0.4);
             } else if (obj.type === 'lagar') {
                  ctx.fillStyle = '#808080';
                  ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
@@ -807,6 +861,8 @@
                 activeNpc.question = null;
                 activeNpc.questCompleted = true;
                 activeNpc.awaitingAnswer = false;
+                inspirationCount += 4;
+                counterValueEl.textContent = inspirationCount;
                 if (!maps.elder_house.scenery.find(s => s.targetMap === 'vinhedo')) {
                     maps.elder_house.scenery.push({ type: 'door', bright: true, x: TILE_SIZE * 9, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE / 2, targetMap: 'vinhedo', targetX: TILE_SIZE * 2, targetY: TILE_SIZE * 18 });
                 }
