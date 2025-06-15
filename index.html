@@ -331,48 +331,54 @@
             'vinhedo': {
                 width: TILE_SIZE * 60, height: TILE_SIZE * 20,
                 interactables: [
-                    { name: 'Mestre da Vinha', x: TILE_SIZE * 30, y: TILE_SIZE * 12, color: '#8b4513', hairColor: '#654321', firstEnigmaSolved: false, isEnigmaMaster: true, dialogue: 'O que é esta construção, que não \u00e9 feita de tijolos, mas de pessoas, um s\u00f3 corpo com muitos membros?' },
-                    { name: 'Trabalhador Fundador', x: TILE_SIZE * 36, y: TILE_SIZE * 14, color: '#a0522d', hairColor: '#444444', dialogue: 'O Mestre construiu nossa uni\u00e3o sobre uma pedra s\u00f3lida, para que nada possa abal\u00e1-la.' },
-                    { name: 'Mulher S\u00e1bia', x: TILE_SIZE * 24, y: TILE_SIZE * 14, color: '#ed64a6', hairColor: '#ffffff', dialogue: 'Podemos ter todos os dons, mas sem o maior de todos, o v\u00ednculo da perfei\u00e7\u00e3o, nada ser\u00edamos.' },
-                    { name: 'Balde vazio', type: 'bucket', x: TILE_SIZE * 27, y: TILE_SIZE * 14, dialogue: 'Um balde vazio.' },
-                    { name: 'Po\u00e7o', type: 'well', x: TILE_SIZE * 27, y: TILE_SIZE * 15 },
-                    { name: 'Trabalhador Sedento 1', x: TILE_SIZE * 26, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
-                    { name: 'Trabalhador Sedento 2', x: TILE_SIZE * 29, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
-                    { name: 'Videira Antiga', type: 'ancient_vine', x: TILE_SIZE * 18, y: TILE_SIZE * 9, inspirationType: 'ancient_vine' },
-                    { name: 'Espantalho', type: 'scarecrow', x: TILE_SIZE * 55, y: TILE_SIZE * 15, inspirationType: 'scarecrow' },
-                    { name: 'Mesa de Partilha', type: 'sharing_table', x: TILE_SIZE * 32, y: TILE_SIZE * 16, width: TILE_SIZE * 2, inspirationType: 'sharing_table' },
-                    { name: 'Pedras Rejeitadas', type: 'rejected_stones', x: TILE_SIZE * 33, y: TILE_SIZE * 12, inspirationType: 'rejected_stones' },
-                    { name: 'Ferramenta Quebrada', type: 'broken_tool', x: TILE_SIZE * 28, y: TILE_SIZE * 17, inspirationType: 'broken_tool' }
+                    { name: 'Mestre da Vinha', x: TILE_SIZE * 20, y: TILE_SIZE * 8, color: '#8b4513', hairColor: '#654321', firstEnigmaSolved: false, isEnigmaMaster: true, dialogue: 'O que é esta construção, que não \u00e9 feita de tijolos, mas de pessoas, um s\u00f3 corpo com muitos membros?' },
+                    { name: 'Trabalhador Fundador', x: TILE_SIZE * 40, y: TILE_SIZE * 12, color: '#a0522d', hairColor: '#444444', dialogue: 'O Mestre construiu nossa uni\u00e3o sobre uma pedra s\u00f3lida, para que nada possa abal\u00e1-la.' },
+                    { name: 'Mulher S\u00e1bia', x: TILE_SIZE * 12, y: TILE_SIZE * 16, color: '#ed64a6', hairColor: '#ffffff', dialogue: 'Podemos ter todos os dons, mas sem o maior de todos, o v\u00ednculo da perfei\u00e7\u00e3o, nada ser\u00edamos.' },
+                    { name: 'Balde vazio', type: 'bucket', x: TILE_SIZE * 28, y: TILE_SIZE * 14, dialogue: 'Um balde vazio.' },
+                    { name: 'Po\u00e7o', type: 'well', x: TILE_SIZE * 28, y: TILE_SIZE * 15 },
+                    { name: 'Trabalhador Sedento 1', x: TILE_SIZE * 27, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
+                    { name: 'Trabalhador Sedento 2', x: TILE_SIZE * 30, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
+                    { name: 'Videira Antiga', type: 'ancient_vine', x: TILE_SIZE * 6, y: TILE_SIZE * 5, inspirationType: 'ancient_vine' },
+                    { name: 'Espantalho', type: 'scarecrow', x: TILE_SIZE * 50, y: TILE_SIZE * 18, inspirationType: 'scarecrow' },
+                    { name: 'Mesa de Partilha', type: 'sharing_table', x: TILE_SIZE * 33, y: TILE_SIZE * 16, width: TILE_SIZE * 2, inspirationType: 'sharing_table' },
+                    { name: 'Pedras Rejeitadas', type: 'rejected_stones', x: TILE_SIZE * 45, y: TILE_SIZE * 8, inspirationType: 'rejected_stones' },
+                    { name: 'Ferramenta Quebrada', type: 'broken_tool', x: TILE_SIZE * 35, y: TILE_SIZE * 16, inspirationType: 'broken_tool' },
+                    { name: 'Zelador das Uvas', grapeCaretaker: true, grapeQuestCompleted: false, x: TILE_SIZE * 58, y: TILE_SIZE * 2, color: '#556b2f', hairColor: '#3b3b3b', dialogue: '' }
                 ],
                     collectibles: [
-                        { type: 'grape', x: TILE_SIZE * 11, y: TILE_SIZE * 7 },
-                        { type: 'grape', x: TILE_SIZE * 14, y: TILE_SIZE * 7 },
-                        { type: 'grape', x: TILE_SIZE * 17, y: TILE_SIZE * 7 },
-                        { type: 'grape', x: TILE_SIZE * 20, y: TILE_SIZE * 7 },
-                        { type: 'grape', x: TILE_SIZE * 23, y: TILE_SIZE * 7 },
-                        { type: 'grape', x: TILE_SIZE * 11, y: TILE_SIZE * 10 },
-                        { type: 'grape', x: TILE_SIZE * 14, y: TILE_SIZE * 10 },
-                        { type: 'grape', x: TILE_SIZE * 17, y: TILE_SIZE * 10 },
-                        { type: 'grape', x: TILE_SIZE * 20, y: TILE_SIZE * 10 },
-                        { type: 'grape', x: TILE_SIZE * 23, y: TILE_SIZE * 10 }
+                        { type: 'grape', x: TILE_SIZE * 8, y: TILE_SIZE * 6 },
+                        { type: 'grape', x: TILE_SIZE * 12, y: TILE_SIZE * 5, requiresJump: true },
+                        { type: 'grape', x: TILE_SIZE * 18, y: TILE_SIZE * 7 },
+                        { type: 'grape', x: TILE_SIZE * 25, y: TILE_SIZE * 6, requiresJump: true },
+                        { type: 'grape', x: TILE_SIZE * 30, y: TILE_SIZE * 10 },
+                        { type: 'grape', x: TILE_SIZE * 35, y: TILE_SIZE * 12, requiresJump: true },
+                        { type: 'grape', x: TILE_SIZE * 40, y: TILE_SIZE * 14 },
+                        { type: 'grape', x: TILE_SIZE * 45, y: TILE_SIZE * 5, requiresJump: true },
+                        { type: 'grape', x: TILE_SIZE * 48, y: TILE_SIZE * 9 },
+                        { type: 'grape', x: TILE_SIZE * 52, y: TILE_SIZE * 13 },
+                        { type: 'grape', x: TILE_SIZE * 54, y: TILE_SIZE * 16, requiresJump: true },
+                        { type: 'grape', x: TILE_SIZE * 57, y: TILE_SIZE * 4 }
                     ],
                 scenery: [
                     { type: 'lagar', x: TILE_SIZE * 28, y: TILE_SIZE * 10, width: TILE_SIZE * 4, height: TILE_SIZE * 2 },
-                    { type: 'videira', x: TILE_SIZE * 10, y: TILE_SIZE * 6 },
-                    { type: 'videira', x: TILE_SIZE * 13, y: TILE_SIZE * 6 },
-                    { type: 'videira', x: TILE_SIZE * 16, y: TILE_SIZE * 6 },
-                    { type: 'videira', x: TILE_SIZE * 19, y: TILE_SIZE * 6 },
-                    { type: 'videira', x: TILE_SIZE * 22, y: TILE_SIZE * 6 },
-                    { type: 'videira', x: TILE_SIZE * 10, y: TILE_SIZE * 9 },
-                    { type: 'videira', x: TILE_SIZE * 13, y: TILE_SIZE * 9 },
-                    { type: 'videira', x: TILE_SIZE * 16, y: TILE_SIZE * 9 },
-                    { type: 'videira', x: TILE_SIZE * 19, y: TILE_SIZE * 9 },
-                    { type: 'videira', x: TILE_SIZE * 22, y: TILE_SIZE * 9 },
-                    { type: 'videira', x: TILE_SIZE * 10, y: TILE_SIZE * 12 },
-                    { type: 'videira', x: TILE_SIZE * 13, y: TILE_SIZE * 12 },
-                    { type: 'videira', x: TILE_SIZE * 16, y: TILE_SIZE * 12 },
-                    { type: 'videira', x: TILE_SIZE * 19, y: TILE_SIZE * 12 },
-                    { type: 'videira', x: TILE_SIZE * 22, y: TILE_SIZE * 12 },
+                    { type: 'videira', x: TILE_SIZE * 6, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 9, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 15, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 18, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 24, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 31, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 37, y: TILE_SIZE * 5 },
+                    { type: 'videira', x: TILE_SIZE * 12, y: TILE_SIZE * 9 },
+                    { type: 'videira', x: TILE_SIZE * 17, y: TILE_SIZE * 9 },
+                    { type: 'videira', x: TILE_SIZE * 23, y: TILE_SIZE * 9 },
+                    { type: 'videira', x: TILE_SIZE * 29, y: TILE_SIZE * 9 },
+                    { type: 'videira', x: TILE_SIZE * 35, y: TILE_SIZE * 9 },
+                    { type: 'videira', x: TILE_SIZE * 41, y: TILE_SIZE * 9 },
+                    { type: 'videira', x: TILE_SIZE * 24, y: TILE_SIZE * 13 },
+                    { type: 'videira', x: TILE_SIZE * 30, y: TILE_SIZE * 13 },
+                    { type: 'videira', x: TILE_SIZE * 36, y: TILE_SIZE * 13 },
+                    { type: 'videira', x: TILE_SIZE * 42, y: TILE_SIZE * 13 },
+                    { type: 'videira', x: TILE_SIZE * 48, y: TILE_SIZE * 13 },
                     { type: 'door', x: 0, y: TILE_SIZE * 18, width: TILE_SIZE, height: TILE_SIZE/2, targetMap: 'elder_house', targetX: TILE_SIZE * 9, targetY: TILE_SIZE * 8 }
                 ],
                 collisionAreas: []
@@ -782,6 +788,22 @@
                 questionContainer.style.display = 'none';
                 yesNoContainer.style.display = 'none';
                 closeModalBtn.style.display = 'inline-block';
+            } else if (item.grapeCaretaker) {
+                if (item.grapeQuestCompleted) {
+                    npcDialogueEl.textContent = 'Obrigado novamente por sua diligência.';
+                } else if (grapes < 12) {
+                    npcDialogueEl.textContent = 'As uvas mais doces crescem nos ramos mais altos e escondidos. Continue procurando, cada uma delas é importante.';
+                } else {
+                    npcDialogueEl.textContent = 'Incrível! Vejo que você não deixou nenhuma para trás, nem mesmo as mais esquecidas. Cuidar de cada parte, por menor que seja, é o que fortalece a colheita inteira. Um corpo só é saudável quando todos os seus membros são nutridos, e o maior nutriente de todos é o trabalho feito com amor.';
+                    inspirationCount++;
+                    counterValueEl.textContent = inspirationCount;
+                    grapes = 0;
+                    grapeValueEl.textContent = grapes;
+                    item.grapeQuestCompleted = true;
+                }
+                questionContainer.style.display = 'none';
+                yesNoContainer.style.display = 'none';
+                closeModalBtn.style.display = 'inline-block';
             } else {
                 npcDialogueEl.textContent = item.dialogue;
                 questionContainer.style.display = 'none';
@@ -977,6 +999,7 @@
                     for (let i = maps.vinhedo.collectibles.length - 1; i >= 0; i--) {
                         const item = maps.vinhedo.collectibles[i];
                         if (isColliding(player, item)) {
+                            if (item.type === 'grape' && item.requiresJump && player.z === 0) continue;
                             maps.vinhedo.collectibles.splice(i, 1);
                             if (item.type === 'grape') {
                                 grapes++;
