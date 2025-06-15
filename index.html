@@ -50,6 +50,11 @@
             <button id="playAgainBtn" class="pixel-button bg-gray-600 mt-4">Jogar novamente?</button>
         </div>
     </div>
+    <div id="phase-complete-overlay" class="overlay fixed inset-0 bg-black bg-opacity-90 flex justify-center items-center z-50" style="display: none;">
+        <div class="text-center">
+            <h2 class="text-4xl text-green-400">Fase Concluída!</h2>
+        </div>
+    </div>
      <div id="game-over-overlay" class="overlay fixed inset-0 bg-black bg-opacity-90 flex flex-col justify-center items-center z-50" style="display: none;">
         <div class="text-center">
             <h2 class="text-6xl text-red-600 mb-8" style="text-shadow: 2px 2px #000;">GAME OVER</h2>
@@ -122,6 +127,7 @@
         // --- Elementos da UI e Música ---
         const startOverlay = document.getElementById('start-music-overlay');
         const victoryOverlay = document.getElementById('victory-overlay');
+        const phaseCompleteOverlay = document.getElementById('phase-complete-overlay');
         const gameOverOverlay = document.getElementById('game-over-overlay');
         const restartBtn = document.getElementById('restartBtn');
         const backgroundMusic = document.getElementById('background-music');
@@ -157,6 +163,8 @@
         let faith = 0;
         let grapes = 0;
         let playerHasScroll = false;
+        let playerHasWater = false;
+        let phaseCompletePending = false;
 
         startOverlay.addEventListener('click', () => {
             backgroundMusic.volume = 0.2;
@@ -300,7 +308,11 @@
                 interactables: [
                     { name: 'Mestre da Vinha', x: TILE_SIZE * 30, y: TILE_SIZE * 12, color: '#8b4513', hairColor: '#654321', firstEnigmaSolved: false, isEnigmaMaster: true, dialogue: 'O que é esta construção, que não \u00e9 feita de tijolos, mas de pessoas, um s\u00f3 corpo com muitos membros?' },
                     { name: 'Trabalhador Fundador', x: TILE_SIZE * 36, y: TILE_SIZE * 14, color: '#a0522d', hairColor: '#444444', dialogue: 'O Mestre construiu nossa uni\u00e3o sobre uma pedra s\u00f3lida, para que nada possa abal\u00e1-la.' },
-                    { name: 'Mulher S\u00e1bia', x: TILE_SIZE * 24, y: TILE_SIZE * 14, color: '#ed64a6', hairColor: '#ffffff', dialogue: 'Podemos ter todos os dons, mas sem o maior de todos, o v\u00ednculo da perfei\u00e7\u00e3o, nada ser\u00edamos.' }
+                    { name: 'Mulher S\u00e1bia', x: TILE_SIZE * 24, y: TILE_SIZE * 14, color: '#ed64a6', hairColor: '#ffffff', dialogue: 'Podemos ter todos os dons, mas sem o maior de todos, o v\u00ednculo da perfei\u00e7\u00e3o, nada ser\u00edamos.' },
+                    { name: 'Balde vazio', type: 'bucket', x: TILE_SIZE * 27, y: TILE_SIZE * 14, dialogue: 'Um balde vazio.' },
+                    { name: 'Po\u00e7o', type: 'well', x: TILE_SIZE * 27, y: TILE_SIZE * 15 },
+                    { name: 'Trabalhador Sedento 1', x: TILE_SIZE * 26, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true },
+                    { name: 'Trabalhador Sedento 2', x: TILE_SIZE * 29, y: TILE_SIZE * 17, color: '#a0522d', hairColor: '#555555', dialogue: '...sede...', needsWater: true }
                 ],
                     collectibles: [
                         { type: 'grape', x: TILE_SIZE * 11, y: TILE_SIZE * 7 },
@@ -448,6 +460,18 @@
                  ctx.strokeStyle = '#444444';
                  ctx.lineWidth = 2;
                  ctx.stroke();
+            } else if (obj.type === 'well') {
+                 ctx.fillStyle = '#708090';
+                 ctx.beginPath();
+                 ctx.arc(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/2, 0, Math.PI * 2);
+                 ctx.fill();
+                 ctx.fillStyle = '#2c5282';
+                 ctx.beginPath();
+                 ctx.arc(obj.x + obj.width/2, obj.y + obj.height/2, obj.width/3, 0, Math.PI * 2);
+                 ctx.fill();
+            } else if (obj.type === 'bucket') {
+                 ctx.fillStyle = '#a0aec0';
+                 ctx.fillRect(obj.x + obj.width*0.2, obj.y + obj.height*0.2, obj.width*0.6, obj.height*0.6);
             } else if (obj.type === 'videira') {
                  ctx.fillStyle = '#225a1a';
                  ctx.fillRect(obj.x, obj.y, TILE_SIZE * 1.5, TILE_SIZE * 0.8);
@@ -626,7 +650,25 @@
             feedbackText.textContent = '';
             answerInput.value = '';
             
-            if (item.isEnigmaMaster) {
+            if (item.type === 'well') {
+                const bucketIndex = maps.vinhedo.interactables.findIndex(i => i.type === 'bucket');
+                if (bucketIndex !== -1) maps.vinhedo.interactables.splice(bucketIndex, 1);
+                playerHasWater = true;
+                npcDialogueEl.textContent = 'Você encheu o balde com água.';
+                questionContainer.style.display = 'none';
+                yesNoContainer.style.display = 'none';
+                closeModalBtn.style.display = 'inline-block';
+            } else if (item.needsWater) {
+                if (playerHasWater) {
+                    playerHasWater = false;
+                    item.needsWater = false;
+                    item.dialogue = 'O Mestre sempre fala sobre caridade e amor ao próximo.';
+                }
+                npcDialogueEl.textContent = item.dialogue;
+                questionContainer.style.display = 'none';
+                yesNoContainer.style.display = 'none';
+                closeModalBtn.style.display = 'inline-block';
+            } else if (item.isEnigmaMaster) {
                 npcDialogueEl.textContent = item.firstEnigmaSolved ?
                     'Voc\u00ea entendeu a forma. Mas qual \u00e9 a argamassa que nos une? O maior de todos os dons?' :
                     item.dialogue;
@@ -710,6 +752,16 @@
                 activeNpc.isMoving = true;
                 delete activeNpc.moveAfterClose;
             }
+            if (phaseCompletePending) {
+                phaseCompleteOverlay.style.display = 'flex';
+                setTimeout(() => {
+                    phaseCompleteOverlay.style.display = 'none';
+                    currentMap = 'elder_house';
+                    player.x = TILE_SIZE * 9;
+                    player.y = TILE_SIZE * 8;
+                }, 3000);
+                phaseCompletePending = false;
+            }
             activeNpc = null;
         }
         function closeInspiration() { inspirationModal.style.display = 'none'; }
@@ -734,8 +786,14 @@
                     }
                 } else {
                     if (userAnswer === 'caridade' || userAnswer === 'amor') {
-                        closeModal();
-                        victoryOverlay.style.display = 'flex';
+                        feedbackText.textContent = 'Correto!';
+                        feedbackText.style.color = '#68d391';
+                        answerInput.value = '';
+                        npcDialogueEl.textContent = 'Você compreendeu a alma da nossa comunidade. Leve essa lição com você.';
+                        questionContainer.style.display = 'none';
+                        yesNoContainer.style.display = 'none';
+                        closeModalBtn.style.display = 'inline-block';
+                        phaseCompletePending = true;
                     } else {
                         closeModal();
                         gameOverOverlay.style.display = 'flex';
