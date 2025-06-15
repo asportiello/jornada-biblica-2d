@@ -47,6 +47,7 @@
         <div class="text-center">
             <h2 class="text-4xl text-green-400 mb-4">Enigma Resolvido!</h2>
             <p class="text-xl">Você alcançou a sabedoria. A paz esteja contigo.</p>
+            <button id="playAgainBtn" class="pixel-button bg-gray-600 mt-4">Jogar novamente?</button>
         </div>
     </div>
      <div id="game-over-overlay" class="overlay fixed inset-0 bg-black bg-opacity-90 flex flex-col justify-center items-center z-50" style="display: none;">
@@ -78,6 +79,10 @@
             <div id="questionContainer" class="hidden">
                 <input type="text" id="answerInput" class="bg-gray-700 border-2 border-gray-500 rounded-md p-2 text-white w-full mb-4 focus:outline-none focus:border-yellow-400" placeholder="Digite a palavra...">
                 <button id="submitAnswerBtn" class="pixel-button bg-green-600">Revelar</button>
+            </div>
+            <div id="yesNoContainer" class="hidden space-x-4 mt-4">
+                <button id="yesBtn" class="pixel-button bg-green-600">Sim</button>
+                <button id="noBtn" class="pixel-button bg-red-600">Não</button>
             </div>
             <p id="feedbackText" class="mt-4 h-6 text-xl"></p>
              <button id="closeModalBtn" class="mt-4 pixel-button bg-red-600">Fechar</button>
@@ -123,6 +128,9 @@
         const npcNameEl = document.getElementById('npcName');
         const npcDialogueEl = document.getElementById('npcDialogue');
         const questionContainer = document.getElementById('questionContainer');
+        const yesNoContainer = document.getElementById('yesNoContainer');
+        const yesBtn = document.getElementById('yesBtn');
+        const noBtn = document.getElementById('noBtn');
         const answerInput = document.getElementById('answerInput');
         const submitAnswerBtn = document.getElementById('submitAnswerBtn');
         const closeModalBtn = document.getElementById('closeModalBtn');
@@ -133,6 +141,7 @@
         const inspirationVerse = document.getElementById('inspirationVerse');
         const inspirationSource = document.getElementById('inspirationSource');
         const closeInspirationBtn = document.getElementById('closeInspirationBtn');
+        const playAgainBtn = document.getElementById('playAgainBtn');
         const counterValueEl = document.getElementById('counter-value');
         const faithValueEl = document.getElementById('faith-value');
         
@@ -153,6 +162,18 @@
         }, { once: true });
         
         restartBtn.addEventListener('click', () => window.location.reload());
+        playAgainBtn.addEventListener('click', () => window.location.reload());
+        yesBtn.addEventListener('click', () => {
+            if (activeNpc) {
+                activeNpc.awaitingAnswer = true;
+                openModal(activeNpc);
+            }
+        });
+        noBtn.addEventListener('click', () => {
+            npcDialogueEl.textContent = 'Volte quando tiver maior inspiração, filho.';
+            yesNoContainer.style.display = 'none';
+            closeModalBtn.style.display = 'inline-block';
+        });
 
         const camera = {
             x: 0, y: 0, width: canvas.width, height: canvas.height,
@@ -213,7 +234,7 @@
             'elder_house': {
                  width: TILE_SIZE * 12, height: TILE_SIZE * 10,
                  interactables: [
-                     { name: 'Ancião', x: TILE_SIZE * 7, y: TILE_SIZE * 4, color: '#f6ad55', hairColor: '#FFFFFF', isQuestGiver: true, hasGivenQuest: false, dialogue: 'A paz, viajante. Para sair, encontre a porta. Lá fora, busque a sabedoria que não se vê. Converse com meus irmãos, e quando entender o que nos move e nos conecta ao divino, volte e diga-me a palavra.', question: 'Você encontrou a sabedoria? Qual é a palavra?', answer: 'espírito', successDialogue: 'Exato! É o Espírito que dá vida e nos guia. Você tem um coração sábio.' },
+                    { name: 'Ancião', x: TILE_SIZE * 7, y: TILE_SIZE * 4, color: '#f6ad55', hairColor: '#FFFFFF', isQuestGiver: true, hasGivenQuest: false, questCompleted: false, dialogue: 'A paz, viajante. Para sair, encontre a porta. Lá fora, busque a sabedoria que não se vê. Converse com meus irmãos, e quando entender o que nos move e nos conecta ao divino, volte e diga-me a palavra.', question: 'Você encontrou a sabedoria? Qual é a palavra?', answer: 'espírito', successDialogue: 'Exato! É o Espírito que dá vida e nos guia. Você tem um coração sábio.' },
                  ],
                  scenery: [
                     {type: 'door', x: TILE_SIZE * 5, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE / 2, targetMap: 'world', targetX: TILE_SIZE * 10.5, targetY: TILE_SIZE * 8},
@@ -546,15 +567,23 @@
                  if (item.questCompleted) {
                      npcDialogueEl.textContent = item.successDialogue;
                      questionContainer.style.display = 'none';
+                     yesNoContainer.style.display = 'none';
                      closeModalBtn.style.display = 'inline-block';
                  } else if (!item.hasGivenQuest) {
                     npcDialogueEl.textContent = item.dialogue;
                     questionContainer.style.display = 'none';
+                    yesNoContainer.style.display = 'none';
                     closeModalBtn.style.display = 'inline-block';
                     item.hasGivenQuest = true;
+                } else if (!item.awaitingAnswer) {
+                    npcDialogueEl.textContent = 'Você já tem a solução do enigma?';
+                    questionContainer.style.display = 'none';
+                    yesNoContainer.style.display = 'block';
+                    closeModalBtn.style.display = 'none';
                 } else {
                     npcDialogueEl.textContent = item.question;
                     questionContainer.style.display = 'block';
+                    yesNoContainer.style.display = 'none';
                     closeModalBtn.style.display = 'none';
                     setTimeout(() => answerInput.focus(), 100);
                 }
@@ -584,10 +613,12 @@
                     npcDialogueEl.textContent = item.reminderDialogue;
                 }
                 questionContainer.style.display = 'none';
+                yesNoContainer.style.display = 'none';
                 closeModalBtn.style.display = 'inline-block';
             } else {
                 npcDialogueEl.textContent = item.dialogue;
                 questionContainer.style.display = 'none';
+                yesNoContainer.style.display = 'none';
                 closeModalBtn.style.display = 'inline-block';
             }
         }
@@ -603,6 +634,7 @@
         
         function closeModal() {
             modal.style.display = 'none';
+            yesNoContainer.style.display = 'none';
             if (activeNpc && activeNpc.moveAfterClose) {
                 activeNpc.isMoving = true;
                 delete activeNpc.moveAfterClose;
@@ -619,6 +651,8 @@
                 feedbackText.style.color = '#68d391';
                 activeNpc.dialogue = activeNpc.successDialogue;
                 activeNpc.question = null;
+                activeNpc.questCompleted = true;
+                activeNpc.awaitingAnswer = false;
                 setTimeout(() => {
                     closeModal();
                     victoryOverlay.style.display = 'flex';
