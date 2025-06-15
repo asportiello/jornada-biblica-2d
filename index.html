@@ -142,6 +142,7 @@
         let currentMap = 'elder_house';
         let inspirationCount = 2;
         let faith = 0;
+        let playerHasScroll = false;
 
         startOverlay.addEventListener('click', () => {
             backgroundMusic.volume = 0.2;
@@ -229,6 +230,7 @@
                     { name: 'Paulo', x: TILE_SIZE * 35, y: TILE_SIZE * 18, color: '#4a5568', hairColor: '#4a3728', dialogue: 'Desejo que sua caminhada seja marcada por aquilo que é eterno, e não apenas pelo que os olhos podem ver.' },
                     { name: 'Anjo Gabriel', x: TILE_SIZE * 45, y: TILE_SIZE * 4, color: '#FFFFFF', hairColor: '#FFD700', dialogue: 'Não trago palavras minhas. Sou um mensageiro, um sopro da vontade do Altíssimo.' },
                     { name: 'Profeta Isaías', x: TILE_SIZE * 48, y: TILE_SIZE * 13, color: '#b794f4', hairColor: '#C0C0C0', dialogue: 'Quando falei pela primeira vez, parecia que uma presença me envolvia. Foi como respirar outra realidade.' },
+                    { name: 'Mateus', x: TILE_SIZE * 40, y: TILE_SIZE * 20, color: '#d69e2e', hairColor: '#704214', isFetchQuest: true, hasGivenQuest: false, questCompleted: false, dialogue: 'Por favor, você pode me ajudar? Perdi um pergaminho valioso por aqui.', reminderDialogue: 'Se encontrar o pergaminho perdido, volte e fale comigo.', successDialogue: 'Muito obrigado por recuperar o pergaminho!' },
                     { type: 'campfire', name: 'Fogueira', x: TILE_SIZE * 18, y: TILE_SIZE * 13, dialogue: '*O fogo dança e consome...*', inspirationType: 'fire' },
                     { type: 'tree', name: 'Árvore', x: TILE_SIZE * 35, y: TILE_SIZE * 17, dialogue: '*Um sopro de vida percorre a criação.*', inspirationType: 'wind' },
                     { type: 'deck', name: 'Deck', x: TILE_SIZE * 20, y: TILE_SIZE * 9, width: TILE_SIZE * 2, height: TILE_SIZE * 2, dialogue: '*Um bom lugar para observar a água...*', inspirationType: 'water' }
@@ -236,7 +238,8 @@
                 collectibles: [
                     { type: 'cross', x: TILE_SIZE * 14, y: TILE_SIZE * 6 },
                     { type: 'cross', x: TILE_SIZE * 26, y: TILE_SIZE * 14 },
-                    { type: 'cross', x: TILE_SIZE * 42, y: TILE_SIZE * 10 }
+                    { type: 'cross', x: TILE_SIZE * 42, y: TILE_SIZE * 10 },
+                    { type: 'scroll', x: TILE_SIZE * 46, y: TILE_SIZE * 3 },
                 ],
                 scenery: [
                     { type: 'house_ext', x: TILE_SIZE * 10, y: TILE_SIZE * 6 },
@@ -245,12 +248,26 @@
                     { type: 'flowering_tree', x: TILE_SIZE * 2, y: TILE_SIZE * 3},
                     { type: 'tree', x: TILE_SIZE * 10, y: TILE_SIZE * 18 },
                     { type: 'hill', x: TILE_SIZE * 44, y: TILE_SIZE * 3, width: TILE_SIZE * 4, height: TILE_SIZE * 4},
-                    { type: 'hole', x: TILE_SIZE * 30, y: TILE_SIZE * 7, width: TILE_SIZE, height: TILE_SIZE }
+                    { type: 'hole', x: TILE_SIZE * 30, y: TILE_SIZE * 7, width: TILE_SIZE, height: TILE_SIZE },
+                    { type: 'door', x: TILE_SIZE * 49, y: TILE_SIZE * 10, width: TILE_SIZE, height: TILE_SIZE/2, targetMap: 'monte_das_oliveiras', targetX: TILE_SIZE, targetY: TILE_SIZE * 8 },
                 ],
                 collisionAreas: [
                     { x: TILE_SIZE * 21, y: 0, width: TILE_SIZE * 4, height: TILE_SIZE * 11 },
                     { x: TILE_SIZE * 21, y: TILE_SIZE * 13, width: TILE_SIZE * 4, height: TILE_SIZE * 12 }
                 ]
+            },
+            'monte_das_oliveiras': {
+                width: TILE_SIZE * 30, height: TILE_SIZE * 20,
+                interactables: [],
+                collectibles: [],
+                scenery: [
+                    { type: 'door', x: 0, y: TILE_SIZE * 8, width: TILE_SIZE, height: TILE_SIZE/2, targetMap: 'world', targetX: TILE_SIZE * 48, targetY: TILE_SIZE * 10 },
+                    { type: 'olive_tree', x: TILE_SIZE * 5, y: TILE_SIZE * 6 },
+                    { type: 'olive_tree', x: TILE_SIZE * 12, y: TILE_SIZE * 9 },
+                    { type: 'olive_tree', x: TILE_SIZE * 20, y: TILE_SIZE * 7 }
+                ],
+                collisionAreas: [],
+                stars: []
             }
         };
 
@@ -279,10 +296,18 @@
                     });
                 }
             }
-             for(let i=0; i<50; i++) {
+            for(let i=0; i<50; i++) {
                 riverParticles.push({
                     x: TILE_SIZE * 21 + Math.random() * (TILE_SIZE * 4), y: Math.random() * maps.world.height,
                     size: Math.random() * 2 + 1, speedY: Math.random() * 0.5 + 0.2,
+                });
+            }
+            const oliveMap = maps['monte_das_oliveiras'];
+            for(let i=0; i<50; i++) {
+                oliveMap.stars.push({
+                    x: Math.random() * oliveMap.width,
+                    y: Math.random() * oliveMap.height * 0.5,
+                    size: Math.random() * 2 + 1
                 });
             }
         }
@@ -301,12 +326,14 @@
         }
         
         function drawSceneryObject(obj) {
-            if (obj.type === 'tree' || obj.type === 'flowering_tree') {
+            if (obj.type === 'tree' || obj.type === 'flowering_tree' || obj.type === 'olive_tree') {
                 const treeBaseY = obj.y + TILE_SIZE;
                 ctx.fillStyle = '#875a2f';
                 ctx.fillRect(obj.x, treeBaseY, TILE_SIZE, TILE_SIZE);
                 const swayX = Math.sin(animationFrame * 0.05 + obj.x) * 4;
-                ctx.fillStyle = obj.type === 'flowering_tree' ? '#ffc0cb' : '#2f855a';
+                if (obj.type === 'flowering_tree') ctx.fillStyle = '#ffc0cb';
+                else if (obj.type === 'olive_tree') ctx.fillStyle = '#6b8e23';
+                else ctx.fillStyle = '#2f855a';
                 ctx.beginPath();
                 ctx.arc(obj.x + TILE_SIZE / 2 + swayX, treeBaseY - TILE_SIZE * 0.4, TILE_SIZE, 0, Math.PI * 2);
                 ctx.fill();
@@ -364,6 +391,9 @@
                 const cy = obj.y + obj.height / 2;
                 ctx.fillRect(cx - obj.width * 0.1, obj.y, obj.width * 0.2, obj.height);
                 ctx.fillRect(obj.x, cy - obj.height * 0.1, obj.width, obj.height * 0.2);
+            } else if (obj.type === 'scroll') {
+                ctx.fillStyle = '#deb887';
+                ctx.fillRect(obj.x + obj.width * 0.2, obj.y + obj.height * 0.2, obj.width * 0.6, obj.height * 0.6);
             }
         }
 
@@ -373,8 +403,15 @@
                 ctx.fillStyle = '#48bb78'; ctx.fillRect(0, 0, map.width, map.height);
                 ctx.fillStyle = '#a0aec0'; ctx.fillRect(0, TILE_SIZE * 10, map.width, TILE_SIZE * 6);
                 ctx.fillStyle = '#4299e1'; ctx.fillRect(TILE_SIZE * 21, 0, TILE_SIZE * 4, map.height);
+            } else if (currentMap === 'monte_das_oliveiras') {
+                ctx.fillStyle = '#0b1d30';
+                ctx.fillRect(0, 0, map.width, map.height);
+                ctx.fillStyle = '#ffffff';
+                (map.stars || []).forEach(s => {
+                    ctx.fillRect(s.x, s.y, s.size, s.size);
+                });
             } else { // elder_house
-                 ctx.fillStyle = '#a0522d';
+                ctx.fillStyle = '#a0522d';
                 ctx.fillRect(0, 0, map.width, map.height);
                 ctx.fillStyle = '#808080';
                 ctx.fillRect(0, 0, map.width, TILE_SIZE/2);
@@ -494,6 +531,21 @@
                     closeModalBtn.style.display = 'none';
                     setTimeout(() => answerInput.focus(), 100);
                 }
+            } else if (item.isFetchQuest) {
+                if (item.questCompleted) {
+                    npcDialogueEl.textContent = item.successDialogue;
+                } else if (playerHasScroll) {
+                    npcDialogueEl.textContent = item.successDialogue;
+                    item.questCompleted = true;
+                    playerHasScroll = false;
+                } else if (!item.hasGivenQuest) {
+                    npcDialogueEl.textContent = item.dialogue;
+                    item.hasGivenQuest = true;
+                } else {
+                    npcDialogueEl.textContent = item.reminderDialogue;
+                }
+                questionContainer.style.display = 'none';
+                closeModalBtn.style.display = 'inline-block';
             } else {
                 npcDialogueEl.textContent = item.dialogue;
                 questionContainer.style.display = 'none';
@@ -608,8 +660,13 @@
                         const item = maps.world.collectibles[i];
                         if (isColliding(player, item)) {
                             maps.world.collectibles.splice(i, 1);
-                            faith++;
-                            faithValueEl.textContent = faith;
+                            if (item.type === 'cross') {
+                                faith++;
+                                faithValueEl.textContent = faith;
+                            } else if (item.type === 'scroll') {
+                                playerHasScroll = true;
+                                openModal({name: 'Pergaminho', dialogue: 'Você encontrou o pergaminho! Volte para Mateus.'});
+                            }
                         }
                     }
                 }
